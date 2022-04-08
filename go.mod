@@ -1,5 +1,4 @@
-// +heroku goVersion go1.17
-module github.com/flexicon/nerfthis-toools
+module github.com/flexicon/nerfthis-tools
 
 go 1.17
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/flexicon/nerfthis-toools/views"
+	"github.com/flexicon/nerfthis-tools/views"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
