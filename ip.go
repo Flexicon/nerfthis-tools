@@ -15,7 +15,7 @@ type IPTplArgs struct {
 	GeoIP *GeoIPResult
 }
 
-type IPResponse struct {
+type GeoIPResult struct {
 	IP          string  `json:"ip"`
 	CountryCode string  `json:"country_code"`
 	CountryName string  `json:"country_name"`
@@ -25,22 +25,6 @@ type IPResponse struct {
 	TimeZone    string  `json:"time_zone"`
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
-}
-
-type GeoIPResult struct {
-	Query       string  `json:"query"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"countryCode"`
-	RegionName  string  `json:"regionName"`
-	City        string  `json:"city"`
-	Zip         string  `json:"zip"`
-	Timezone    string  `json:"timezone"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-}
-
-func (result GeoIPResult) ToResponse() IPResponse {
-	return mapGeoIPResultToResponse(&result)
 }
 
 type IPLookuper interface {
@@ -56,7 +40,7 @@ func IPHandler(ipService IPLookuper) echo.HandlerFunc {
 		}
 
 		if strings.Contains(c.Path(), "json") {
-			return c.JSON(http.StatusOK, geoIP.ToResponse())
+			return c.JSON(http.StatusOK, geoIP)
 		}
 		return c.Render(http.StatusOK, "ip", IPTplArgs{GeoIP: geoIP})
 	}
@@ -84,17 +68,35 @@ func (s IPService) Lookup(ip string) (*GeoIPResult, error) {
 	}
 	defer res.Body.Close()
 
-	var result *GeoIPResult
-	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+	var lookup *GeoIPLookupResponse
+	if err := json.NewDecoder(res.Body).Decode(&lookup); err != nil {
 		return nil, err
 	}
 
-	s.cache.Set(cacheKey, result)
-	return result, nil
+	result := lookup.ToResult()
+	s.cache.Set(cacheKey, &result)
+
+	return &result, nil
 }
 
-func mapGeoIPResultToResponse(result *GeoIPResult) IPResponse {
-	return IPResponse{
+type GeoIPLookupResponse struct {
+	Query       string  `json:"query"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"countryCode"`
+	RegionName  string  `json:"regionName"`
+	City        string  `json:"city"`
+	Zip         string  `json:"zip"`
+	Timezone    string  `json:"timezone"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+}
+
+func (r GeoIPLookupResponse) ToResult() GeoIPResult {
+	return mapGeoIPResponseToResult(&r)
+}
+
+func mapGeoIPResponseToResult(result *GeoIPLookupResponse) GeoIPResult {
+	return GeoIPResult{
 		IP:          result.Query,
 		CountryCode: result.CountryCode,
 		CountryName: result.Country,

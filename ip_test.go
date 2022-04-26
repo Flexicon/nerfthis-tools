@@ -19,15 +19,15 @@ const (
 
 var (
 	TestGeoIP = GeoIPResult{
-		Query:       TestIP,
+		IP:          TestIP,
 		CountryCode: "de-DE",
-		Country:     "Germany",
+		CountryName: "Germany",
 		RegionName:  "Idk",
 		City:        "Stuttgart",
-		Zip:         "70173",
-		Timezone:    "GMT+1",
-		Lat:         48.78,
-		Lon:         9.18,
+		ZipCode:     "70173",
+		TimeZone:    "GMT+1",
+		Latitude:    48.78,
+		Longitude:   9.18,
 	}
 )
 
