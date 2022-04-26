@@ -12,11 +12,10 @@ import (
 )
 
 type IPTplArgs struct {
-	GeoIP   *GeoIPResult
-	Headers map[string]string
+	GeoIP *GeoIPResult
 }
 
-type GeoIPResult struct {
+type IPResponse struct {
 	IP          string  `json:"ip"`
 	CountryCode string  `json:"country_code"`
 	CountryName string  `json:"country_name"`
@@ -26,6 +25,22 @@ type GeoIPResult struct {
 	TimeZone    string  `json:"time_zone"`
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
+}
+
+type GeoIPResult struct {
+	Query       string  `json:"query"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"countryCode"`
+	RegionName  string  `json:"regionName"`
+	City        string  `json:"city"`
+	Zip         string  `json:"zip"`
+	Timezone    string  `json:"timezone"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+}
+
+func (result GeoIPResult) ToResponse() IPResponse {
+	return mapGeoIPResultToResponse(&result)
 }
 
 type IPLookuper interface {
@@ -41,7 +56,7 @@ func IPHandler(ipService IPLookuper) echo.HandlerFunc {
 		}
 
 		if strings.Contains(c.Path(), "json") {
-			return c.JSON(http.StatusOK, geoIP)
+			return c.JSON(http.StatusOK, geoIP.ToResponse())
 		}
 		return c.Render(http.StatusOK, "ip", IPTplArgs{GeoIP: geoIP})
 	}
@@ -63,7 +78,7 @@ func (s IPService) Lookup(ip string) (*GeoIPResult, error) {
 		return cached.(*GeoIPResult), nil
 	}
 
-	res, err := http.Get("https://freegeoip.app/json/" + ip)
+	res, err := http.Get("http://ip-api.com/json/" + ip)
 	if err != nil {
 		return nil, err
 	}
@@ -76,4 +91,18 @@ func (s IPService) Lookup(ip string) (*GeoIPResult, error) {
 
 	s.cache.Set(cacheKey, result)
 	return result, nil
+}
+
+func mapGeoIPResultToResponse(result *GeoIPResult) IPResponse {
+	return IPResponse{
+		IP:          result.Query,
+		CountryCode: result.CountryCode,
+		CountryName: result.Country,
+		RegionName:  result.RegionName,
+		City:        result.City,
+		ZipCode:     result.Zip,
+		TimeZone:    result.Timezone,
+		Latitude:    result.Lat,
+		Longitude:   result.Lon,
+	}
 }
